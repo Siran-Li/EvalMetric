@@ -1,5 +1,5 @@
-gspread==6.2.0
-pandas==2.2.3
-protobuf==6.30.2
-st_gsheets_connection==0.1.0
-streamlit==1.44.1
+streamlit>=1.22.0
+gspread>=5.7.0
+google-auth>=2.16.0
+pandas>=1.5.0
+streamlit-gsheets>=0.1.0
