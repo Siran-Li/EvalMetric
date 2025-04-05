@@ -97,17 +97,13 @@ if st.session_state.loaded_data:
         <p><strong>Instructions:</strong></p>
         <ol>
             <li><strong>Task 1:</strong> Score alignment (0-5) between the sentence and reference.</li>
-            <li><strong>Task 2:</strong> Rank the 3 model scores (1=best, 3=worst) by alignment accuracy.</li>
+            <li><strong>Task 2:</strong> Rank the 3 metric scores (1=best, 3=worst) by alignment accuracy.</li>
         </ol>
     </div>
     """, unsafe_allow_html=True)
 
     # Evaluation Form
     with st.form("evaluation_form"):
-        # --- Task 1: Alignment Score ---
-        st.markdown("### Task 1: Alignment Score (0-5)")
-        st.markdown("**How well does the sentence match the reference?**")
-
         # Reference and Sentence (improved styling)
         st.markdown("#### 📝 Reference")
         st.markdown(
@@ -124,6 +120,10 @@ if st.session_state.loaded_data:
             f'</div>', 
             unsafe_allow_html=True
         )
+
+        # --- Task 1: Alignment Score ---
+        st.markdown("### Task 1: Alignment Score (0-5)")
+        st.markdown("**How well does the sentence match the reference?**")
 
         # Slider with scoring guide
         st.markdown("**Score Guide:**")
@@ -146,7 +146,7 @@ if st.session_state.loaded_data:
 
         # --- Task 2: Metric Ranking ---
         st.markdown("### Task 2: Rank Metric Scores (1=Best, 3=Worst)")
-        st.markdown("**Which metric best reflects alignment?**")
+        st.markdown("**Which metric best reflects alignment between the reference and sentence?**")
 
         # Score cards in columns (improved layout)
         col1, col2, col3 = st.columns(3)
@@ -175,9 +175,9 @@ if st.session_state.loaded_data:
                 st.session_state.ranks[key] = rank
 
         # Validate that ranks are unique
-        if all([st.session_state.ranks['s1'], st.session_state.ranks['s2'], st.session_state.ranks['s3']]):
-            if len({st.session_state.ranks['s1'], st.session_state.ranks['s2'], st.session_state.ranks['s3']}) < 3:
-                st.error("Ranks must be unique.")
+        # if all([st.session_state.ranks['s1'], st.session_state.ranks['s2'], st.session_state.ranks['s3']]):
+            # if len({st.session_state.ranks['s1'], st.session_state.ranks['s2'], st.session_state.ranks['s3']}) < 3:
+                # st.error("Ranks must be unique.")
         
         submitted_eval = st.form_submit_button("Submit Evaluation")
         
@@ -185,8 +185,8 @@ if st.session_state.loaded_data:
             # Final validation before submission
             if not all([st.session_state.ranks['s1'], st.session_state.ranks['s2'], st.session_state.ranks['s3']]):
                 st.error("Please rank all scores")
-            elif len({st.session_state.ranks['s1'], st.session_state.ranks['s2'], st.session_state.ranks['s3']}) < 3:
-                st.error("Ranks must be unique")
+            # elif len({st.session_state.ranks['s1'], st.session_state.ranks['s2'], st.session_state.ranks['s3']}) < 3:
+            #     st.error("Ranks must be unique")
             else:
                 try:
                     # Write data using gspread
