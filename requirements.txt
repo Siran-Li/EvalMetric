@@ -1,5 +1,4 @@
-gspread==6.2.0
+gspread>=5.8.0,<6
 pandas==2.2.3
-protobuf==6.30.2
 st_gsheets_connection==0.1.0
 streamlit==1.44.1

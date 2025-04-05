@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import gspread
 from google.oauth2 import service_account
-from streamlit_gsheets import GSheetsConnection
 
 # --- SETUP GOOGLE SHEETS CONNECTION ---
 def get_gsheets_connection():
