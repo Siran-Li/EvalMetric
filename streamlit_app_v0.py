@@ -90,89 +90,67 @@ if st.session_state.loaded_data:
     
     st.write("---")
 
-    # Title and Instructions
-    st.markdown("## 📊 Evaluation Tasks")
-    st.markdown("""
-    <div style="background:#f0f8ff; padding:15px; border-radius:10px; margin-bottom:20px;">
-        <p><strong>Instructions:</strong></p>
-        <ol>
-            <li><strong>Task 1:</strong> Score alignment (0-5) between the sentence and reference.</li>
-            <li><strong>Task 2:</strong> Rank the 3 model scores (1=best, 3=worst) by alignment accuracy.</li>
-        </ol>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Evaluation Form
+    st.markdown("## Test 1")
+    # Evaluation form
     with st.form("evaluation_form"):
-        # --- Task 1: Alignment Score ---
-        st.markdown("### Task 1: Alignment Score (0-5)")
-        st.markdown("**How well does the sentence match the reference?**")
 
-        # Reference and Sentence (improved styling)
-        st.markdown("#### 📝 Reference")
-        st.markdown(
-            f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #4e79a7; border-radius:5px; margin-bottom:15px;">'
-            f'{data["reference"]}'
-            f'</div>', 
-            unsafe_allow_html=True
-        )
-
-        st.markdown("#### 💬 Generated Sentence")
-        st.markdown(
-            f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #e15759; border-radius:5px; margin-bottom:20px;">'
-            f'{data["sentence"]}'
-            f'</div>', 
-            unsafe_allow_html=True
-        )
-
-        # Slider with scoring guide
-        st.markdown("**Score Guide:**")
+        # Reference Section
+        st.markdown("**📝 Reference:**")
+        st.markdown(f'<div style="background:#f5f5f5; padding:10px; border-radius:5px;">{data["reference"]}</div>', unsafe_allow_html=True)
+        st.markdown("**💬 Sentence:**")
+        st.markdown(f'<div style="background:#f5f5f5; padding:10px; border-radius:5px;">{data["sentence"]}</div>', unsafe_allow_html=True)
+        
+        
+        st.markdown("#### Task 1: ")
+        # Larger slider text
         st.markdown("""
-        - **0-1:** No/weak alignment  
-        - **2-3:** Partial alignment  
-        - **4-5:** Strong alignment  
-        """)
+        <style>
+            div[data-baseweb="slider"] > div:first-child {
+                font-size: 18px !important;
+            }
+        </style>
+        """, unsafe_allow_html=True)
 
+        st.write("Assign a score (0-5) based on how well the generated sentence aligns with the reference:")
         human_score = st.slider(
-            "**Your Score (0-5):**",
+            "Score",
             0, 5,
             value=st.session_state.human_score,
             key="human_score_slider"
         )
         st.session_state.human_score = human_score
 
-        # Divider
-        st.markdown("---")
-
-        # --- Task 2: Metric Ranking ---
-        st.markdown("### Task 2: Rank Metric Scores (1=Best, 3=Worst)")
-        st.markdown("**Which metric best reflects alignment?**")
-
-        # Score cards in columns (improved layout)
+        st.markdown("#### Task 2: ")
+        st.write("Rank the three given model scores (0-1) based on how accurately they reflect sentence alignment:")
+        
+        # Get user rankings
         col1, col2, col3 = st.columns(3)
-        scores = {
-            's1': data['s1'],
-            's2': data['s2'],
-            's3': data['s3']
-        }
-
-        for i, (key, score) in enumerate(scores.items(), 1):
-            with eval(f"col{i}"):
-                # Score card with color coding
-                st.markdown(
-                    f'<div style="background:#f0f0f0; padding:10px; border-radius:5px; text-align:center; margin-bottom:10px;">'
-                    f'<p style="margin:0; font-weight:bold;">Metric {i}</p>'
-                    f'<p style="margin:0; font-size:24px; color:{"#e15759" if score >= 0.7 else "#4e79a7" if score < 0.4 else "#f28e2b"};">{score:.2f}</p>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-                # Rank dropdown
-                rank = st.selectbox(
-                    f"Rank Metric {i}",
-                    ['', 1, 2, 3],
-                    key=f"{key}_rank",
-                    index=['', 1, 2, 3].index(st.session_state.ranks[key]))
-                st.session_state.ranks[key] = rank
+        with col1:
+            st.markdown(score_card("SCORE", data['s1']), unsafe_allow_html=True)
+            s1_rank = st.selectbox(
+                "Rank", ['', 1, 2, 3], 
+                key="s1_rank",
+                index=['', 1, 2, 3].index(st.session_state.ranks['s1'])
+            )
+            st.session_state.ranks['s1'] = s1_rank
+            
+        with col2:
+            st.markdown(score_card("SCORE", data['s2']), unsafe_allow_html=True)
+            s2_rank = st.selectbox(
+                "Rank", ['', 1, 2, 3], 
+                key="s2_rank",
+                index=['', 1, 2, 3].index(st.session_state.ranks['s2'])
+            )
+            st.session_state.ranks['s2'] = s2_rank
+            
+        with col3:
+            st.markdown(score_card("SCORE", data['s3']), unsafe_allow_html=True)
+            s3_rank = st.selectbox(
+                "Rank", ['', 1, 2, 3], 
+                key="s3_rank",
+                index=['', 1, 2, 3].index(st.session_state.ranks['s3'])
+            )
+            st.session_state.ranks['s3'] = s3_rank
 
         # Validate that ranks are unique
         if all([st.session_state.ranks['s1'], st.session_state.ranks['s2'], st.session_state.ranks['s3']]):
