@@ -149,6 +149,8 @@ else:
             # --- Task 2: Metric Ranking ---
             st.markdown("#### Task 2: Metric Ranking (1=Best, 3=Worst)")
             st.markdown("**Which metric best reflects alignment between the reference and sentence?**")
+            st.markdown("*Metrics are scored on a 0-1 scale where higher values indicate better alignment*")
+
 
             # Metrics with improved bottom spacing
             cols = st.columns(3)
@@ -259,6 +261,8 @@ else:
             # --- Task 2: Metric Ranking ---
             st.markdown("#### Task 2: Metric Ranking (1=Best, 3=Worst)")
             st.markdown("**Which metric best reflects alignment between the reference and sentence?**")
+            st.markdown("*Metrics are scored on a 0-1 scale where higher values indicate better alignment*")
+
 
             # Score cards in columns
             col1, col2, col3 = st.columns(3)
