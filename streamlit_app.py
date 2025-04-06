@@ -321,8 +321,8 @@ else:
                             st.session_state.current_sample += 1
                             st.rerun()
     
-                if st.session_state.current_sample > 2:
-                # else:
+                # if st.session_state.current_sample > 2:
+                else:
                     if st.form_submit_button("Submit All"):
                         # Final validation
                         if not all([ranks['A'], ranks['B'], ranks['C']]):
