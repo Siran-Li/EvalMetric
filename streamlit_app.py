@@ -22,7 +22,7 @@ def score_card(title, score):
 
 
 # --- SETUP GOOGLE SHEETS CONNECTION ---
-@st.cache_resource(ttl=600)  # Cache the connection for 10 minutes
+@st.cache_resource(ttl=1200)  # Cache the connection for 20 minutes
 def get_gsheets_connection():
     """Authenticate and return a gspread client."""
     credentials = service_account.Credentials.from_service_account_info(
@@ -31,7 +31,7 @@ def get_gsheets_connection():
     )
     return gspread.authorize(credentials)
 
-@st.cache_data(ttl=1200)  # Cache the data for 10 minutes
+@st.cache_data(ttl=1200)  # Cache the data for 20 minutes
 def load_data():
     """Load data from Google Sheets with caching."""
     gc = get_gsheets_connection()
@@ -42,175 +42,310 @@ def load_data():
 # --- MAIN APP ---
 st.title("Sentence Comparison")
 
-# Initialize session state
+# Initialize session state variables
+if 'current_sample' not in st.session_state:
+    st.session_state.current_sample = 0
+if 'evaluations' not in st.session_state:
+    st.session_state.evaluations = {}
 if 'loaded_data' not in st.session_state:
     st.session_state.loaded_data = None
 if 'user_name' not in st.session_state:
     st.session_state.user_name = ""
-if 'ranks' not in st.session_state:
-    st.session_state.ranks = {'s1': '', 's2': '', 's3': ''}
-if 'human_score' not in st.session_state:
-    st.session_state.human_score = 0
+if 'data_group' not in st.session_state:
+    st.session_state.data_group = None
+if 'total_samples' not in st.session_state:
+    st.session_state.total_samples = 0
 
-# Load data with caching
+
 df = load_data()
-df['DataGroup'] = df['DataGroup'].astype(int)
+df['datagroup'] = df['datagroup'].astype(int)
 
-# Data loading form
-with st.form("user_input"):
-    col1, col2 = st.columns(2)
-    with col1:
-        data_id = st.selectbox("Data Group", [''] + sorted(df['DataGroup'].unique().tolist()), key="DataGroup")
-    with col2:
-        name = st.text_input("Your Name", value=st.session_state.user_name, key="name_input")
-    submitted = st.form_submit_button("Load Data")
-
-if submitted and data_id and name:
-    data_id = int(data_id)
-    st.session_state.user_name = name
-    data_row = df[df['DataGroup'] == data_id]
-    if not data_row.empty:
-        st.session_state.loaded_data = {
-            'data_id': data_id,
-            'reference': data_row.iloc[0]['Reference'],
-            'sentence': data_row.iloc[0]['Sentence'],
-            's1': data_row.iloc[0]['S1'],
-            's2': data_row.iloc[0]['S2'],
-            's3': data_row.iloc[0]['S3']
-        }
-        # Reset ranks when loading new data
-        st.session_state.ranks = {'s1': '', 's2': '', 's3': ''}
-        st.session_state.human_score = 0
-    else:
-        st.error("No data found for the given Data ID.")
-
-# Display loaded data and evaluation form
-if st.session_state.loaded_data:
-    data = st.session_state.loaded_data
+# Data loading form - only shown if no datagroup is selected
+if st.session_state.data_group is None:
+    # Static Example Section
+    st.markdown("### Example Preview")
+    st.markdown("Here's how the evaluation will look:")
     
-    st.write("---")
-
-    # Title and Instructions
-    st.markdown("## 📊 Evaluation Tasks")
-    st.markdown("""
-    <div style="background:#f0f8ff; padding:15px; border-radius:10px; margin-bottom:20px;">
-        <p><strong>Instructions:</strong></p>
-        <ol>
-            <li><strong>Task 1:</strong> Score alignment (0-5) between the sentence and reference.</li>
-            <li><strong>Task 2:</strong> Rank the 3 metric scores (1=best, 3=worst) by alignment accuracy.</li>
-        </ol>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Evaluation Form
-    with st.form("evaluation_form"):
-        # Reference and Sentence (improved styling)
-        st.markdown("#### 📝 Reference")
+    # Example data - static values
+    example_data = {
+        'reference': "The watermelon seeds pass through your digestive system.",
+        'sentence': "You grow watermelons in your stomach.",
+        's1': 0.22,
+        's2': 0.57,
+        's3': 0.63
+    }
+    
+    # Display container with improved spacing
+    with st.container(border=True):
+        # Reference and Sentence
+        st.markdown("**Reference**")
         st.markdown(
             f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #4e79a7; border-radius:5px; margin-bottom:15px;">'
-            f'{data["reference"]}'
+            f'{example_data["reference"]}'
             f'</div>', 
             unsafe_allow_html=True
         )
 
-        st.markdown("#### 💬 Generated Sentence")
+        st.markdown("**Sentence**")
         st.markdown(
             f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #e15759; border-radius:5px; margin-bottom:20px;">'
-            f'{data["sentence"]}'
+            f'{example_data["sentence"]}'
             f'</div>', 
             unsafe_allow_html=True
         )
 
         # --- Task 1: Alignment Score ---
-        st.markdown("### Task 1: Alignment Score (0-5)")
+        st.markdown("#### Task 1: Alignment Score (0-5)")
         st.markdown("**How well does the sentence match the reference?**")
-
-        # Slider with scoring guide
-        st.markdown("**Score Guide:**")
+        
+        # Static slider with score 1
         st.markdown("""
-        - **0-1:** No/weak alignment  
-        - **2-3:** Partial alignment  
-        - **4-5:** Strong alignment  
-        """)
-
-        human_score = st.slider(
-            "**Your Score (0-5):**",
-            0, 5,
-            value=st.session_state.human_score,
-            key="human_score_slider"
-        )
-        st.session_state.human_score = human_score
-
-        # Divider
-        st.markdown("---")
+        <div style="padding:10px; background:#f5f5f5; border-radius:5px; margin-bottom:20px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span style="font-size: 0.8em;">0-1: Weak</span>
+                <span style="font-size: 0.8em;">2-3: Partial</span>
+                <span style="font-size: 0.8em;">4-5: Strong</span>
+            </div>
+            <div style="background:#ddd; height:4px; border-radius:2px; margin-bottom:5px;">
+                <div style="background:#4e79a7; width:20%; height:4px;"></div>
+            </div>
+            <div style="text-align:center;">Selected: <strong>1</strong></div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown("**Score: 1** - The sentence is somewhat related but significantly distorts the meaning of the reference.")
 
         # --- Task 2: Metric Ranking ---
-        st.markdown("### Task 2: Rank Metric Scores (1=Best, 3=Worst)")
+        st.markdown("#### Task 2: Metric Ranking (1=Best, 3=Worst)")
         st.markdown("**Which metric best reflects alignment between the reference and sentence?**")
 
-        # Score cards in columns (improved layout)
+        # Metrics with improved bottom spacing
+        cols = st.columns(3)
+        metrics = {
+            'A': {'score': example_data['s1'], 'rank': 1},
+            'B': {'score': example_data['s2'], 'rank': 2}, 
+            'C': {'score': example_data['s3'], 'rank': 3}
+        }
+        
+        for i, (metric, data) in enumerate(metrics.items()):
+            with cols[i]:
+                # Metric score display
+                st.markdown(
+                    f'<div style="background:#f0f0f0; padding:10px; border-radius:5px; text-align:center; margin-bottom:10px;">'
+                    f'<p style="margin:0; font-weight:bold;">Metric {metric}</p>'
+                    f'<p style="margin:0; font-size:24px; color:{"#e15759" if data["score"] >= 0.7 else "#4e79a7" if data["score"] < 0.4 else "#f28e2b"};">{data["score"]:.2f}</p>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+                
+                # Rank display with extra bottom margin
+                st.markdown(
+                    f'<div style="background:#f8f8f8; padding:8px; border-radius:5px; text-align:center; margin-bottom:15px;">'  # Increased margin-bottom
+                    f'<p style="margin:0;">Rank: <strong>{data["rank"]}</strong></p>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+    
+    st.markdown("---")  # Separator before the actual form
+    
+    # Original data loading form
+    with st.form("user_input"):
+        col1, col2 = st.columns(2)
+        with col1:
+            data_group = st.selectbox(
+                "Data Group", 
+                [''] + sorted(df['datagroup'].unique().tolist()), 
+                key="datagroup_select"
+            )
+        with col2:
+            name = st.text_input(
+                "Your Name", 
+                value=st.session_state.user_name, 
+                key="name_input"
+            )
+        submitted = st.form_submit_button("Load Data")
+
+    if submitted and data_group and name:
+        data_group = int(data_group)
+        st.session_state.user_name = name
+        st.session_state.data_group = data_group
+        st.session_state.group_samples = df[df['datagroup'] == data_group].reset_index(drop=True)
+        st.session_state.total_samples = len(st.session_state.group_samples)
+        st.session_state.current_sample = 0 
+        st.rerun()
+    
+
+# Main evaluation interface
+if st.session_state.data_group is not None and st.session_state.current_sample >= 0:
+    # Progress bar
+    progress = st.progress((st.session_state.current_sample) / st.session_state.total_samples)
+    st.caption(f"Sample {st.session_state.current_sample + 1} of {st.session_state.total_samples}")
+    
+    # Get current sample data
+    current_data = st.session_state.group_samples.iloc[st.session_state.current_sample]
+    
+    # Display evaluation form
+    with st.form(f"evaluation_form_{st.session_state.current_sample}"):
+        # Reference and Sentence
+        st.markdown("**Reference**")
+        st.markdown(
+            f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #4e79a7; border-radius:5px; margin-bottom:15px;">'
+            f'{current_data["reference"]}'
+            f'</div>', 
+            unsafe_allow_html=True
+        )
+
+        st.markdown("**Sentence**")
+        st.markdown(
+            f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #e15759; border-radius:5px; margin-bottom:20px;">'
+            f'{current_data["sentence"]}'
+            f'</div>', 
+            unsafe_allow_html=True
+        )
+
+        # --- Task 1: Alignment Score ---
+        st.markdown("#### Task 1: Alignment Score (0-5)")
+        st.markdown("**How well does the sentence match the reference?**")
+        
+        # Compact score guide in one row
+        st.markdown("""
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span style="font-size: 0.8em;">0-1: Weak</span>
+            <span style="font-size: 0.8em;">2-3: Partial</span>
+            <span style="font-size: 0.8em;">4-5: Strong</span>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Load previous evaluation if exists
+        current_eval = st.session_state.evaluations.get(st.session_state.current_sample, {})
+        
+        human_score = st.slider(
+            "Score (0-5)",
+            0, 5,
+            value=current_eval.get('human_score', 0),
+            key=f"human_score_{st.session_state.current_sample}",
+            label_visibility="collapsed"
+        )
+
+        # --- Task 2: Metric Ranking ---
+        st.markdown("#### Task 2: Metric Ranking (1=Best, 3=Worst)")
+        st.markdown("**Which metric best reflects alignment between the reference and sentence?**")
+
+        # Score cards in columns
         col1, col2, col3 = st.columns(3)
         scores = {
-            's1': data['s1'],
-            's2': data['s2'],
-            's3': data['s3']
+            'A': float(current_data['s1']),  # Convert to float to avoid int64
+            'B': float(current_data['s2']),
+            'C': float(current_data['s3'])
         }
 
-        for i, (key, score) in enumerate(scores.items(), 1):
-            with eval(f"col{i}"):
+        ranks = {}
+        for metric, score in scores.items():
+            with col1 if metric == 'A' else col2 if metric == 'B' else col3:
                 # Score card with color coding
                 st.markdown(
                     f'<div style="background:#f0f0f0; padding:10px; border-radius:5px; text-align:center; margin-bottom:10px;">'
-                    f'<p style="margin:0; font-weight:bold;">Metric {i}</p>'
+                    f'<p style="margin:0; font-weight:bold;">Metric {metric}</p>'
                     f'<p style="margin:0; font-size:24px; color:{"#e15759" if score >= 0.7 else "#4e79a7" if score < 0.4 else "#f28e2b"};">{score:.2f}</p>'
                     f'</div>',
                     unsafe_allow_html=True
                 )
                 # Rank dropdown
                 rank = st.selectbox(
-                    f"Rank Metric {i}",
+                    f"Rank Metric {metric}",
                     ['', 1, 2, 3],
-                    key=f"{key}_rank",
-                    index=['', 1, 2, 3].index(st.session_state.ranks[key]))
-                st.session_state.ranks[key] = rank
+                    key=f"{metric}_rank_{st.session_state.current_sample}",
+                    index=['', 1, 2, 3].index(current_eval.get(f"{metric}_rank", '')),
+                    label_visibility="collapsed"
+                )
+                ranks[metric] = rank
 
-        # Validate that ranks are unique
-        # if all([st.session_state.ranks['s1'], st.session_state.ranks['s2'], st.session_state.ranks['s3']]):
-            # if len({st.session_state.ranks['s1'], st.session_state.ranks['s2'], st.session_state.ranks['s3']}) < 3:
-                # st.error("Ranks must be unique.")
+        # Navigation buttons - right aligned
+        cols = st.columns([3, 1, 1])
+        with cols[1]:
+            if st.session_state.current_sample > 0:
+                if st.form_submit_button("⏮ Previous"):
+                    # Save current evaluation before moving
+                    st.session_state.evaluations[st.session_state.current_sample] = {
+                        'human_score': human_score,
+                        'A_rank': ranks['A'],
+                        'B_rank': ranks['B'],
+                        'C_rank': ranks['C']
+                    }
+                    st.session_state.current_sample -= 1
+                    st.rerun()
         
-        submitted_eval = st.form_submit_button("Submit Evaluation")
-        
-        if submitted_eval:
-            # Final validation before submission
-            if not all([st.session_state.ranks['s1'], st.session_state.ranks['s2'], st.session_state.ranks['s3']]):
-                st.error("Please rank all scores")
-            # elif len({st.session_state.ranks['s1'], st.session_state.ranks['s2'], st.session_state.ranks['s3']}) < 3:
-            #     st.error("Ranks must be unique")
+        with cols[2]:
+            if st.session_state.current_sample < st.session_state.total_samples - 1:
+                if st.form_submit_button("Next ⏭"):
+                    # Validate current evaluation
+                    if not all([ranks['A'], ranks['B'], ranks['C']]):
+                        st.error("Please rank all metrics")
+                    else:
+                        # Save current evaluation before moving
+                        st.session_state.evaluations[st.session_state.current_sample] = {
+                            'human_score': human_score,
+                            'A_rank': ranks['A'],
+                            'B_rank': ranks['B'],
+                            'C_rank': ranks['C']
+                        }
+                        st.session_state.current_sample += 1
+                        st.rerun()
+   
             else:
-                try:
-                    # Write data using gspread
-                    gc = get_gsheets_connection()
-                    sheet = gc.open_by_url(st.secrets["connections"]["gsheets"]["spreadsheet"])
-                    worksheet = sheet.worksheet("Score")
-                    
-                    # Append new row
-                    new_row = [
-                        data['data_id'], 
-                        st.session_state.user_name, 
-                        data['reference'], 
-                        data['sentence'], 
-                        data['s1'], data['s2'], data['s3'], 
-                        st.session_state.ranks['s1'], 
-                        st.session_state.ranks['s2'], 
-                        st.session_state.ranks['s3'], 
-                        st.session_state.human_score
-                    ]
-                    worksheet.append_row(new_row)
-                    
-                    st.success("Response saved successfully!")
-                    # Optionally clear selections after successful submission
-                    st.session_state.ranks = {'s1': '', 's2': '', 's3': ''}
-                    st.session_state.human_score = 0
-                except Exception as e:
-                    st.error(f"Error saving response: {str(e)}")
+                if st.form_submit_button("Submit All"):
+                    # Final validation
+                    if not all([ranks['A'], ranks['B'], ranks['C']]):
+                        st.error("Please rank all metrics")
+                    else:
+                        # Save final evaluation
+                        st.session_state.evaluations[st.session_state.current_sample] = {
+                            'human_score': human_score,
+                            'A_rank': ranks['A'],
+                            'B_rank': ranks['B'],
+                            'C_rank': ranks['C']
+                        }
+                        
+                        try:
+                            # Write all evaluations to Google Sheets
+                            gc = get_gsheets_connection()
+                            sheet = gc.open_by_url(st.secrets["connections"]["gsheets"]["spreadsheet"])
+                            worksheet = sheet.worksheet("Score")
+                            
+                            # Prepare all rows to append
+                            rows_to_add = []
+                            for sample_idx, evaluation in st.session_state.evaluations.items():
+                                sample_data = st.session_state.group_samples.iloc[sample_idx]
+                                new_row = [
+                                    int(st.session_state.data_group),  # Convert to int
+                                    st.session_state.user_name, 
+                                    str(sample_data['dataId']),  # Convert to string
+                                    sample_data['reference'], 
+                                    sample_data['sentence'], 
+                                    str(sample_data['label']),  # Convert to string
+                                    sample_data['m1'], 
+                                    float(sample_data['s1']),  # Convert to float
+                                    int(evaluation['A_rank']),  # Convert to int
+                                    sample_data['m2'], 
+                                    float(sample_data['s2']),  # Convert to float
+                                    int(evaluation['B_rank']),  # Convert to int
+                                    sample_data['m3'], 
+                                    float(sample_data['s3']),  # Convert to float
+                                    int(evaluation['C_rank']),  # Convert to int
+                                    int(evaluation['human_score'])  # Convert to int
+                                ]
+                                rows_to_add.append(new_row)
+                            
+                            # Append all rows at once
+                            if rows_to_add:
+                                worksheet.append_rows(rows_to_add)
+                            
+                            st.success("All evaluations submitted successfully!")
+                            
+                            # Reset session state
+                            st.session_state.current_sample = 0
+                            st.session_state.evaluations = {}
+                            st.session_state.data_group = None
+                            st.session_state.group_samples = None
+                            
+                        except Exception as e:
+                            st.error(f"Error saving evaluations: {str(e)}")
