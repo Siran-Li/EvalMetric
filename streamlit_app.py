@@ -170,8 +170,8 @@ else:
                 <div style="text-align:center;">Selected: <strong>1</strong></div>
             </div>
             """, unsafe_allow_html=True)
-            st.markdown("**Explaination of the Score: 1** - The target sentence is somewhat related but significantly distorts the meaning of the reference.")
-
+            st.markdown("**Explanation**: The sentences share similar elements (watermelon seeds and stomach) but convey different meanings, leading to a score of 1 (weak alignment).")
+           
             # --- Task 2: Metric Ranking ---
             st.markdown("#### Task 2: Metric Ranking (1=Best, 3=Worst)")
             st.markdown("**Which metric best reflects alignment between the reference and target sentence?**")
