@@ -91,12 +91,38 @@ if st.session_state.get('show_thank_you', False):
 # Main evaluation interface
 else:
     # --- MAIN APP ---
-    st.title("Sentence Comparison")
+    st.title("📊 Sentence Comparison")
     # Data loading form - only shown if no datagroup is selected
     if st.session_state.data_group is None:
+
+        st.markdown("""
+        <div style="background:#f0f8ff; padding:15px; border-radius:10px; margin-bottom:20px;">
+            <p><strong>Instructions:</strong> You will receive a <strong>reference</strong> and a <strong>target sentence</strong>. Your goal is to assess the similarity between the two sentences by completing the following tasks:</p>
+            <ol>
+                <li><strong>Task 1:</strong> Evaluate the alignment between the <strong>reference</strong> and <strong>target sentence</strong>. Assign a score from 0 to 5 based on how well the two sentences align:
+                    <ul>
+                        <li> 0-1 Weak alignment</li> 
+                        <li> 2-3 Partial alignment</li> 
+                        <li> 4-5 Strong alignment</li>
+                    </ul>
+                </li>
+                <li><strong>Task 2:</strong> You will be presented with three metric scores that assess the alignment between the sentences. Your task is to rank these three scores based on how accurately they reflect the similarity between the <strong>reference</strong> and <strong>target sentence</strong>:
+                    <ul>
+                        <li>1 => Best (most accurate)</li>
+                        <li>2 => Moderate accuracy</li>
+                        <li>3 => Worst (least accurate)</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+        """, unsafe_allow_html=True)
+
         # Static Example Section
-        st.markdown("### Example Preview")
-        st.markdown("Here's how the evaluation will look:")
+        st.markdown("#### Example before the Evaluation Task:")
+        st.markdown("""
+        Before you start, here’s an example to help you understand the evaluation process. 
+        """)
+        # st.markdown("Here's how the evaluation will look:")
         
         # Example data - static values
         example_data = {
@@ -109,7 +135,7 @@ else:
         
         # Display container with improved spacing
         with st.container(border=True):
-            # Reference and Sentence
+            # Reference and target Sentence
             st.markdown("**Reference**")
             st.markdown(
                 f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #4e79a7; border-radius:5px; margin-bottom:15px;">'
@@ -118,7 +144,7 @@ else:
                 unsafe_allow_html=True
             )
 
-            st.markdown("**Sentence**")
+            st.markdown("**Target Sentence**")
             st.markdown(
                 f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #e15759; border-radius:5px; margin-bottom:20px;">'
                 f'{example_data["sentence"]}'
@@ -128,7 +154,7 @@ else:
 
             # --- Task 1: Alignment Score ---
             st.markdown("#### Task 1: Alignment Score (0-5)")
-            st.markdown("**How well does the sentence match the reference?**")
+            st.markdown("**How well does the target sentence match the reference?**")
             
             # Static slider with score 1
             st.markdown("""
@@ -144,11 +170,11 @@ else:
                 <div style="text-align:center;">Selected: <strong>1</strong></div>
             </div>
             """, unsafe_allow_html=True)
-            st.markdown("**Score: 1** - The sentence is somewhat related but significantly distorts the meaning of the reference.")
+            st.markdown("**Explaination of the Score: 1** - The target sentence is somewhat related but significantly distorts the meaning of the reference.")
 
             # --- Task 2: Metric Ranking ---
             st.markdown("#### Task 2: Metric Ranking (1=Best, 3=Worst)")
-            st.markdown("**Which metric best reflects alignment between the reference and sentence?**")
+            st.markdown("**Which metric best reflects alignment between the reference and target sentence?**")
             st.markdown("*Metrics are scored on a 0-1 scale where higher values indicate better alignment*")
 
 
@@ -217,7 +243,7 @@ else:
         
         # Display evaluation form
         with st.form(f"evaluation_form_{st.session_state.current_sample}"):
-            # Reference and Sentence
+            # Reference and target Sentence
             st.markdown("**Reference**")
             st.markdown(
                 f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #4e79a7; border-radius:5px; margin-bottom:15px;">'
@@ -226,7 +252,7 @@ else:
                 unsafe_allow_html=True
             )
 
-            st.markdown("**Sentence**")
+            st.markdown("**Target Sentence**")
             st.markdown(
                 f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #e15759; border-radius:5px; margin-bottom:20px;">'
                 f'{current_data["sentence"]}'
@@ -236,7 +262,7 @@ else:
 
             # --- Task 1: Alignment Score ---
             st.markdown("#### Task 1: Alignment Score (0-5)")
-            st.markdown("**How well does the sentence match the reference?**")
+            st.markdown("**How well does the target sentence match the reference?**")
             
             # Compact score guide in one row
             st.markdown("""
@@ -260,7 +286,7 @@ else:
 
             # --- Task 2: Metric Ranking ---
             st.markdown("#### Task 2: Metric Ranking (1=Best, 3=Worst)")
-            st.markdown("**Which metric best reflects alignment between the reference and sentence?**")
+            st.markdown("**Which metric best reflects alignment between the reference and target sentence?**")
             st.markdown("*Metrics are scored on a 0-1 scale where higher values indicate better alignment*")
 
 
