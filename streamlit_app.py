@@ -32,11 +32,11 @@ def get_gsheets_connection():
     return gspread.authorize(credentials)
 
 @st.cache_data(ttl=1200)  # Cache the data for 20 minutes
-def load_data():
+def load_data(sheetname):
     """Load data from Google Sheets with caching."""
     gc = get_gsheets_connection()
     sheet = gc.open_by_url(st.secrets["connections"]["gsheets"]["spreadsheet"])
-    worksheet = sheet.worksheet("Data")
+    worksheet = sheet.worksheet(sheetname)
     return pd.DataFrame(worksheet.get_all_records())
 
 
@@ -55,8 +55,12 @@ if 'total_samples' not in st.session_state:
     st.session_state.total_samples = 0
 
 
-df = load_data()
+df = load_data("Data")
+df_finished = load_data("Finished")
 df['datagroup'] = df['datagroup'].astype(int)
+df_finished['datagroup'] = df_finished['datagroup'].astype(int)
+# filtered the datagroup that are already finished
+df = df[~df['datagroup'].isin(df_finished['datagroup'])]
 
 # At the top of your script or in the main display logic
 if st.session_state.get('show_thank_you', False):
@@ -399,6 +403,11 @@ else:
                                 # Append all rows at once
                                 if rows_to_add:
                                     worksheet.append_rows(rows_to_add)
+
+                                gc = get_gsheets_connection()
+                                sheet = gc.open_by_url(st.secrets["connections"]["gsheets"]["spreadsheet"])
+                                worksheet = sheet.worksheet("Finished")
+                                worksheet.append_row([int(st.session_state.data_group), st.session_state.user_name])
                                 
                                 # Set a flag to show thank you page
                                 st.session_state.show_thank_you = True
