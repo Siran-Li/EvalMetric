@@ -62,6 +62,17 @@ df_finished['datagroup'] = df_finished['datagroup'].astype(int)
 # filtered the datagroup that are already finished
 df = df[~df['datagroup'].isin(df_finished['datagroup'])]
 
+# Define the mapping between display labels and values
+rank_options = {
+    '': '',
+    'Most Accurate': 1,
+    'In-Between': 2,
+    'Least Accurate': 3
+}
+
+# Reverse mapping for getting the display label from value
+value_to_label = {v: k for k, v in rank_options.items()}
+
 # At the top of your script or in the main display logic
 if st.session_state.get('show_thank_you', False):
     st.empty()
@@ -112,9 +123,9 @@ else:
                 </li>
                 <li><strong>Task 2:</strong> You will be presented with three metric scores that assess the alignment between the sentences. Your task is to rank these three scores based on how accurately they reflect the similarity between the <strong>reference</strong> and <strong>target sentence</strong>:
                     <ul>
-                        <li>1 => Best (most accurate)</li>
-                        <li>2 => Moderate accuracy</li>
-                        <li>3 => Worst (least accurate)</li>
+                        <li> Most accurate </li>
+                        <li> In-between </li>
+                        <li> Least accurate </li>
                     </ul>
                 </li>
             </ol>
@@ -177,7 +188,7 @@ else:
             st.markdown("**Explanation**: The sentences share similar elements (watermelon seeds and stomach) but convey different meanings, leading to a score of 1 (weak alignment).")
            
             # --- Task 2: Metric Ranking ---
-            st.markdown("#### Task 2: Metric Ranking (1=Best, 3=Worst)")
+            st.markdown("#### Task 2: Metric Ranking (Most Accurate, In-Between, Least Accurate)")
             st.markdown("**Which metric best reflects alignment between the reference and target sentence?**")
             st.markdown("*Metrics are scored on a 0-1 scale where higher values indicate better alignment*")
 
@@ -185,9 +196,9 @@ else:
             # Metrics with improved bottom spacing
             cols = st.columns(3)
             metrics = {
-                'A': {'score': example_data['s1'], 'rank': 1},
-                'B': {'score': example_data['s2'], 'rank': 2}, 
-                'C': {'score': example_data['s3'], 'rank': 3}
+                'A': {'score': example_data['s1'], 'rank': 'Most Accurate'},
+                'B': {'score': example_data['s2'], 'rank': 'In-Between'}, 
+                'C': {'score': example_data['s3'], 'rank': 'Least Accurate'}
             }
             
             for i, (metric, data) in enumerate(metrics.items()):
@@ -289,7 +300,7 @@ else:
             )
 
             # --- Task 2: Metric Ranking ---
-            st.markdown("#### Task 2: Metric Ranking (1=Best, 3=Worst)")
+            st.markdown("#### Task 2: Metric Ranking (Most Accurate, In-Between, Least Accurate)")
             st.markdown("**Which metric best reflects alignment between the reference and target sentence?**")
             st.markdown("*Metrics are scored on a 0-1 scale where higher values indicate better alignment*")
 
@@ -314,14 +325,29 @@ else:
                         unsafe_allow_html=True
                     )
                     # Rank dropdown
+                    # rank = st.selectbox(
+                    #     f"Rank Metric {metric}",
+                    #     ['', 1, 2, 3],
+                    #     key=f"{metric}_rank_{st.session_state.current_sample}",
+                    #     index=['', 1, 2, 3].index(current_eval.get(f"{metric}_rank", '')),
+                    #     label_visibility="collapsed"
+                    # )
+                    # ranks[metric] = rank
+
+                    # Get current value (convert to label for display)
+                    current_value = current_eval.get(f"{metric}_rank", '')
+                    current_label = value_to_label.get(current_value, '')
+                     # Create the selectbox with display labels but store the numeric values
                     rank = st.selectbox(
                         f"Rank Metric {metric}",
-                        ['', 1, 2, 3],
+                        list(rank_options.keys()),  # Display labels
                         key=f"{metric}_rank_{st.session_state.current_sample}",
-                        index=['', 1, 2, 3].index(current_eval.get(f"{metric}_rank", '')),
+                        index=list(rank_options.values()).index(current_value) if current_value in rank_options.values() else 0,
                         label_visibility="collapsed"
                     )
-                    ranks[metric] = rank
+
+                    # Store the corresponding value (1, 2, 3) instead of the label
+                    ranks[metric] = rank_options[rank]
 
             # Navigation buttons - right aligned
             cols = st.columns([3, 1, 1])
