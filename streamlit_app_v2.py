@@ -3,111 +3,22 @@ import pandas as pd
 import gspread
 from google.oauth2 import service_account
 
-# ===== CSS STYLING =====
-
-# Using columns with tighter spacing
-st.markdown("""
-<style>
-    .scale-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 8px;
-    }
-    .score-number {
-        background: #4CAF50;
-        color: white;
-        border-radius: 50%;
-        width: 28px;
-        height: 28px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        margin-right: 12px;
-        flex-shrink: 0;
-    }
-    .tip-box {
-        background-color: #fcf7e9;
-        padding: 10px 15px;
-        border-radius: 8px;
-        margin-top: 12px;
-        border-left: 4px solid #f3dfa6;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<style>
-    /* Score Visualization */
-    .score-visualization {
-        padding: 12px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        margin: 15px 0;
+def score_card(title, score):
+    return f"""
+    <div style='
         border: 1px solid #e0e0e0;
-    }
-    .score-labels {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-    }
-    .score-bar-container {
-        background: #e9ecef;
-        height: 6px;
-        border-radius: 3px;
-        margin-bottom: 8px;
-        overflow: hidden;
-    }
-    .score-bar {
-        height: 100%;
-        transition: width 0.3s ease;
-    }
-    .score-indicator {
-        text-align: center;
-        font-size: 0.9em;
-    }
-    .score-value {
-        font-weight: bold;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-score_colors = {
-    0: "#cccccc",  # Gray (unchanged)
-    1: "#FFA000",  # Darker orange (replaced red)
-    2: "#FFC107",  # Amber (previously orange)
-    3: "#FFD54F",  # Light amber (previously yellow)
-    4: "#8BC34A",  # Light green (unchanged)
-    5: "#4CAF50"   # Green (unchanged)
-}
-
-score_descriptions = {
-    0: "Not rated", 1: "Contradiction", 2: "Deviation",
-    3: "Partial", 4: "Close", 5: "Perfect"
-}
-
-# Score display function
-def show_score(current_score):
-    
-    st.markdown(f"""
-    <div class="score-visualization">
-        <div class="score-labels">
-            <span style="color:{score_colors[0]};">0</span>
-            <span style="color:{score_colors[1]};">1</span>
-            <span style="color:{score_colors[2]};">2</span>
-            <span style="color:{score_colors[3]};">3</span>
-            <span style="color:{score_colors[4]};">4</span>
-            <span style="color:{score_colors[5]};">5</span>
-        </div>
-        <div class="score-bar-container">
-            <div class="score-bar" style="width:{current_score * 20}%; background:{"#f44336"};"></div>
-        </div>
-        <div class="score-indicator">
-            Selected: <span class="score-value" style="color:{score_colors[current_score]};">{current_score}</span> • {score_descriptions[current_score]} Match
+        border-radius: 8px;
+        padding: 12px;
+        margin: 8px 0;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    '>
+        <div style='font-size:14px; color:#666;'>{title}</div>
+        <div style='font-size:24px; font-weight:bold; color:#2c3e50;'>
+            {score:.4f}
         </div>
     </div>
-    """, unsafe_allow_html=True)
-
+    """
 
 
 # --- SETUP GOOGLE SHEETS CONNECTION ---
@@ -147,12 +58,20 @@ if 'total_samples' not in st.session_state:
 df = load_data("Data")
 df_finished = load_data("Finished")
 df['datagroup'] = df['datagroup'].astype(int)
-
+df_finished['datagroup'] = df_finished['datagroup'].astype(int)
 # filtered the datagroup that are already finished
-if len(df_finished) > 0:
-    df_finished['datagroup'] = df_finished['datagroup'].astype(int)
-    df = df[~df['datagroup'].isin(df_finished['datagroup'])]
+df = df[~df['datagroup'].isin(df_finished['datagroup'])]
 
+# Define the mapping between display labels and values
+rank_options = {
+    '': '',
+    'Most Accurate': 1,
+    'In-Between': 2,
+    'Least Accurate': 3
+}
+
+# Reverse mapping for getting the display label from value
+value_to_label = {v: k for k, v in rank_options.items()}
 
 # At the top of your script or in the main display logic
 if st.session_state.get('show_thank_you', False):
@@ -187,62 +106,31 @@ if st.session_state.get('show_thank_you', False):
 # Main evaluation interface
 else:
     # --- MAIN APP ---
-    st.title("📝 Semantic Match Grading")
+    st.title("📊 Sentence Comparison")
     # Data loading form - only shown if no datagroup is selected
     if st.session_state.data_group is None:
 
-        with st.container():
-            st.markdown("""
-            **Evaluation Instructions**: You will see a **reference sentence** and a **target sentence**.  
-            Rate how well their meanings match using this scale:
-            """)
-            
-            # Score 5
-            st.markdown("""
-            <div class="scale-container">
-                <div class="score-number" style="background:#4CAF50;">5</div>
-                <div><strong>Perfect Alignment</strong> - Same meaning, may paraphrase but no contradictions or core omissions</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Score 4
-            st.markdown("""
-            <div class="scale-container">
-                <div class="score-number" style="background:#8BC34A;">4</div>
-                <div><strong>Close Match</strong> - Minor differences in non-essential details</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Score 3
-            st.markdown("""
-            <div class="scale-container">
-                <div class="score-number" style="background:#FFD54F;">3</div>
-                <div><strong>Partial Match</strong> - Some alignment but unclear <strong>(Please click this only if you really couldn’t decide)</strong></div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Score 2
-            st.markdown("""
-            <div class="scale-container">
-                <div class="score-number" style="background:#FFC107;">2</div>
-                <div><strong>Significant Deviation</strong> - Changes or omits core meaning</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Score 1
-            st.markdown("""
-            <div class="scale-container">
-                <div class="score-number" style="background:#FFA000;">1</div>
-                <div><strong>Contradiction/Irrelevant</strong> - Opposite meaning or completely unrelated</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("""
-            <div class="tip-box">
-                <strong>Tip:</strong> Focus on whether the <strong>core meaning</strong> is preserved, not exact wording.
-            </div>
-            """, unsafe_allow_html=True)
-
+        st.markdown("""
+        <div style="background:#f0f8ff; padding:15px; border-radius:10px; margin-bottom:20px;">
+            <p><strong>Instructions:</strong> You will receive a <strong>reference</strong> and a <strong>target sentence</strong>. Your goal is to assess the similarity between the two sentences by completing the following tasks:</p>
+            <ol>
+                <li><strong>Task 1:</strong> Evaluate the alignment between the <strong>reference</strong> and <strong>target sentence</strong>. Assign a score from 0 to 5 based on how well the two sentences align:
+                    <ul>
+                        <li> 0-1 Weak alignment</li> 
+                        <li> 2-3 Partial alignment</li> 
+                        <li> 4-5 Strong alignment</li>
+                    </ul>
+                </li>
+                <li><strong>Task 2:</strong> You will be presented with three metric scores that assess the alignment between the sentences. Your task is to rank these three scores based on how accurately they reflect the similarity between the <strong>reference</strong> and <strong>target sentence</strong>:
+                    <ul>
+                        <li> Most accurate </li>
+                        <li> In-between </li>
+                        <li> Least accurate </li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+        """, unsafe_allow_html=True)
 
         # Static Example Section
         st.markdown("#### Example before the Evaluation Task:")
@@ -252,26 +140,21 @@ else:
         # st.markdown("Here's how the evaluation will look:")
         
         # Example data - static values
-        example1 = {
+        example_data = {
             'reference': "The watermelon seeds pass through your digestive system.",
             'sentence': "You grow watermelons in your stomach.",
-            "score": 1
-        }
-
-        example2 = {
-            'reference': "The watermelon seeds pass through your digestive system.",
-            'sentence': "The watermelon seeds will be excreted.",
-            "score": 5
+            's1': 0.22,
+            's2': 0.57,
+            's3': 0.63
         }
         
-        st.markdown("##### Example 1:")
         # Display container with improved spacing
         with st.container(border=True):
             # Reference and target Sentence
             st.markdown("**Reference**")
             st.markdown(
                 f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #4e79a7; border-radius:5px; margin-bottom:15px;">'
-                f'{example1["reference"]}'
+                f'{example_data["reference"]}'
                 f'</div>', 
                 unsafe_allow_html=True
             )
@@ -279,47 +162,63 @@ else:
             st.markdown("**Target Sentence**")
             st.markdown(
                 f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #e15759; border-radius:5px; margin-bottom:20px;">'
-                f'{example1["sentence"]}'
+                f'{example_data["sentence"]}'
                 f'</div>', 
                 unsafe_allow_html=True
             )
 
             # --- Task 1: Alignment Score ---
-            st.markdown("#### Task: Semantic Match Score (1-5)")
+            st.markdown("#### Task 1: Alignment Score (0-5)")
             st.markdown("**How well does the target sentence match the reference?**")
             
-
-            # Score display - replace 'current_score' with your variable
-            show_score(example1["score"])
+            # Static slider with score 1
+            st.markdown("""
+            <div style="padding:10px; background:#f5f5f5; border-radius:5px; margin-bottom:20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="font-size: 0.8em;">0-1: Weak</span>
+                    <span style="font-size: 0.8em;">2-3: Partial</span>
+                    <span style="font-size: 0.8em;">4-5: Strong</span>
+                </div>
+                <div style="background:#ddd; height:4px; border-radius:2px; margin-bottom:5px;">
+                    <div style="background:#4e79a7; width:20%; height:4px;"></div>
+                </div>
+                <div style="text-align:center;">Selected: <strong>1</strong></div>
+            </div>
+            """, unsafe_allow_html=True)
             st.markdown("**Explanation**: The sentences share similar elements (watermelon seeds and stomach) but convey different meanings, leading to a score of 1 (weak alignment).")
-        
-        st.markdown("##### Example 2:")
-        with st.container(border=True):
-            # Reference and target Sentence
-            st.markdown("**Reference**")
-            st.markdown(
-                f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #4e79a7; border-radius:5px; margin-bottom:15px;">'
-                f'{example2["reference"]}'
-                f'</div>', 
-                unsafe_allow_html=True
-            )
+           
+            # --- Task 2: Metric Ranking ---
+            st.markdown("#### Task 2: Metric Ranking (Most Accurate, In-Between, Least Accurate)")
+            st.markdown("**Which metric best reflects alignment between the reference and target sentence?**")
+            st.markdown("*Metrics are scored on a 0-1 scale where higher values indicate better alignment*")
 
-            st.markdown("**Target Sentence**")
-            st.markdown(
-                f'<div style="background:#f9f9f9; padding:12px; border-left:4px solid #e15759; border-radius:5px; margin-bottom:20px;">'
-                f'{example2["sentence"]}'
-                f'</div>', 
-                unsafe_allow_html=True
-            )
 
-            # --- Task 1: Alignment Score ---
-            st.markdown("#### Task: Semantic Match Score (1-5)")
-            st.markdown("**How well does the target sentence match the reference?**")
+            # Metrics with improved bottom spacing
+            cols = st.columns(3)
+            metrics = {
+                'A': {'score': example_data['s1'], 'rank': 'Most Accurate'},
+                'B': {'score': example_data['s2'], 'rank': 'In-Between'}, 
+                'C': {'score': example_data['s3'], 'rank': 'Least Accurate'}
+            }
             
-
-            # Score display - replace 'current_score' with your variable
-            show_score(example2["score"])
-            st.markdown("**Explanation**: The sentences share similar elements (watermelon seeds and stomach) but convey different meanings, leading to a score of 1 (weak alignment).")
+            for i, (metric, data) in enumerate(metrics.items()):
+                with cols[i]:
+                    # Metric score display
+                    st.markdown(
+                        f'<div style="background:#f0f0f0; padding:10px; border-radius:5px; text-align:center; margin-bottom:10px;">'
+                        f'<p style="margin:0; font-weight:bold;">Metric {metric}</p>'
+                        f'<p style="margin:0; font-size:24px; color:{"#e15759" if data["score"] >= 0.7 else "#4e79a7" if data["score"] < 0.4 else "#f28e2b"};">{data["score"]:.2f}</p>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+                    
+                    # Rank display with extra bottom margin
+                    st.markdown(
+                        f'<div style="background:#f8f8f8; padding:8px; border-radius:5px; text-align:center; margin-bottom:15px;">'  # Increased margin-bottom
+                        f'<p style="margin:0;">Rank: <strong>{data["rank"]}</strong></p>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
         
         st.markdown("---")  # Separator before the actual form
         
@@ -354,54 +253,6 @@ else:
         progress = st.progress((st.session_state.current_sample) / st.session_state.total_samples)
         st.caption(f"Sample {st.session_state.current_sample + 1} of {st.session_state.total_samples}")
         
-        # Score 5
-        st.markdown("""
-        <div class="scale-container">
-            <div class="score-number" style="background:#4CAF50;">5</div>
-            <div><strong>Perfect Alignment</strong> - Same meaning, may paraphrase but no contradictions or core omissions</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Score 4
-        st.markdown("""
-        <div class="scale-container">
-            <div class="score-number" style="background:#8BC34A;">4</div>
-            <div><strong>Close Match</strong> - Minor differences in non-essential details</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Score 3
-        st.markdown("""
-        <div class="scale-container">
-            <div class="score-number" style="background:#FFC107;">3</div>
-            <div><strong>Partial Match</strong> - Some alignment but unclear <strong>(Please click this only if you really couldn’t decide)</strong></div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Score 2
-        st.markdown("""
-        <div class="scale-container">
-            <div class="score-number" style="background:#FF9800;">2</div>
-            <div><strong>Significant Deviation</strong> - Changes or omits core meaning</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Score 1
-        st.markdown("""
-        <div class="scale-container">
-            <div class="score-number" style="background:#F44336;">1</div>
-            <div><strong>Contradiction/Irrelevant</strong> - Opposite meaning or completely unrelated</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div class="tip-box">
-            <strong>Tip:</strong> Focus on whether the <strong>core meaning</strong> is preserved, not exact wording.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown(" ")
-
         # Get current sample data
         current_data = st.session_state.group_samples.iloc[st.session_state.current_sample]
         
@@ -424,19 +275,16 @@ else:
                 unsafe_allow_html=True
             )
 
-            # --- Task 1: Semantic Match Score ---
-            st.markdown("#### Task 1: Semantic Match Score (1-5)")
+            # --- Task 1: Alignment Score ---
+            st.markdown("#### Task 1: Alignment Score (0-5)")
             st.markdown("**How well does the target sentence match the reference?**")
             
             # Compact score guide in one row
-            st.markdown(f"""
-            <div class="score-labels">
-                <span style="color:{score_colors[0]};"></span>
-                <span style="color:{score_colors[1]};"></span>
-                <span style="color:{score_colors[2]};"></span>
-                <span style="color:{score_colors[3]};"></span>
-                <span style="color:{score_colors[4]};"></span>
-                <span style="color:{score_colors[5]};"></span>
+            st.markdown("""
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span style="font-size: 0.8em;">0-1: Weak</span>
+                <span style="font-size: 0.8em;">2-3: Partial</span>
+                <span style="font-size: 0.8em;">4-5: Strong</span>
             </div>
             """, unsafe_allow_html=True)
             
@@ -451,7 +299,56 @@ else:
                 label_visibility="collapsed"
             )
 
-                        
+            # --- Task 2: Metric Ranking ---
+            st.markdown("#### Task 2: Metric Ranking (Most Accurate, In-Between, Least Accurate)")
+            st.markdown("**Which metric best reflects alignment between the reference and target sentence?**")
+            st.markdown("*Metrics are scored on a 0-1 scale where higher values indicate better alignment*")
+
+
+            # Score cards in columns
+            col1, col2, col3 = st.columns(3)
+            scores = {
+                'A': float(current_data['s1']),  # Convert to float to avoid int64
+                'B': float(current_data['s2']),
+                'C': float(current_data['s3'])
+            }
+
+            ranks = {}
+            for metric, score in scores.items():
+                with col1 if metric == 'A' else col2 if metric == 'B' else col3:
+                    # Score card with color coding
+                    st.markdown(
+                        f'<div style="background:#f0f0f0; padding:10px; border-radius:5px; text-align:center; margin-bottom:10px;">'
+                        f'<p style="margin:0; font-weight:bold;">Metric {metric}</p>'
+                        f'<p style="margin:0; font-size:24px; color:{"#e15759" if score >= 0.7 else "#4e79a7" if score < 0.4 else "#f28e2b"};">{score:.2f}</p>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+                    # Rank dropdown
+                    # rank = st.selectbox(
+                    #     f"Rank Metric {metric}",
+                    #     ['', 1, 2, 3],
+                    #     key=f"{metric}_rank_{st.session_state.current_sample}",
+                    #     index=['', 1, 2, 3].index(current_eval.get(f"{metric}_rank", '')),
+                    #     label_visibility="collapsed"
+                    # )
+                    # ranks[metric] = rank
+
+                    # Get current value (convert to label for display)
+                    current_value = current_eval.get(f"{metric}_rank", '')
+                    current_label = value_to_label.get(current_value, '')
+                     # Create the selectbox with display labels but store the numeric values
+                    rank = st.selectbox(
+                        f"Rank Metric {metric}",
+                        list(rank_options.keys()),  # Display labels
+                        key=f"{metric}_rank_{st.session_state.current_sample}",
+                        index=list(rank_options.values()).index(current_value) if current_value in rank_options.values() else 0,
+                        label_visibility="collapsed"
+                    )
+
+                    # Store the corresponding value (1, 2, 3) instead of the label
+                    ranks[metric] = rank_options[rank]
+
             # Navigation buttons - right aligned
             cols = st.columns([3, 1, 1])
             with cols[1]:
@@ -459,7 +356,10 @@ else:
                     if st.form_submit_button("⏮ Previous"):
                         # Save current evaluation before moving
                         st.session_state.evaluations[st.session_state.current_sample] = {
-                            'human_score': human_score
+                            'human_score': human_score,
+                            'A_rank': ranks['A'],
+                            'B_rank': ranks['B'],
+                            'C_rank': ranks['C']
                         }
                         st.session_state.current_sample -= 1
                         st.rerun()
@@ -468,12 +368,15 @@ else:
                 if st.session_state.current_sample < st.session_state.total_samples - 1:
                     if st.form_submit_button("Next ⏭"):
                         # Validate current evaluation
-                        if human_score == 0 :
-                            st.error("Please provide a score between 1 and 5")
+                        if not all([ranks['A'], ranks['B'], ranks['C']]):
+                            st.error("Please rank all metrics")
                         else:
                             # Save current evaluation before moving
                             st.session_state.evaluations[st.session_state.current_sample] = {
-                                'human_score': human_score
+                                'human_score': human_score,
+                                'A_rank': ranks['A'],
+                                'B_rank': ranks['B'],
+                                'C_rank': ranks['C']
                             }
                             st.session_state.current_sample += 1
                             st.rerun()
@@ -482,12 +385,15 @@ else:
                 else:
                     if st.form_submit_button("Submit All"):
                         # Final validation
-                        if human_score == 0:
-                            st.error("Please provide a score between 1 and 5")
+                        if not all([ranks['A'], ranks['B'], ranks['C']]):
+                            st.error("Please rank all metrics")
                         else:
                             # Save final evaluation
                             st.session_state.evaluations[st.session_state.current_sample] = {
-                                'human_score': human_score
+                                'human_score': human_score,
+                                'A_rank': ranks['A'],
+                                'B_rank': ranks['B'],
+                                'C_rank': ranks['C']
                             }
                             
                             try:
@@ -509,10 +415,13 @@ else:
                                         str(sample_data['label']),  # Convert to string
                                         sample_data['m1'], 
                                         float(sample_data['s1']),  # Convert to float
+                                        int(evaluation['A_rank']),  # Convert to int
                                         sample_data['m2'], 
                                         float(sample_data['s2']),  # Convert to float
+                                        int(evaluation['B_rank']),  # Convert to int
                                         sample_data['m3'], 
                                         float(sample_data['s3']),  # Convert to float
+                                        int(evaluation['C_rank']),  # Convert to int
                                         int(evaluation['human_score'])  # Convert to int
                                     ]
                                     rows_to_add.append(new_row)
