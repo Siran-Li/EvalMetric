@@ -354,6 +354,7 @@ else:
         progress = st.progress((st.session_state.current_sample) / st.session_state.total_samples)
         st.caption(f"Sample {st.session_state.current_sample + 1} of {st.session_state.total_samples}")
         
+        st.markdown("Score meaning:")
         # Score 5
         st.markdown("""
         <div class="scale-container">
@@ -373,7 +374,7 @@ else:
         # Score 3
         st.markdown("""
         <div class="scale-container">
-            <div class="score-number" style="background:#FFC107;">3</div>
+            <div class="score-number" style="background:#FFD54F;">3</div>
             <div><strong>Partial Match</strong> - Some alignment but unclear <strong>(Please click this only if you really couldn’t decide)</strong></div>
         </div>
         """, unsafe_allow_html=True)
@@ -381,7 +382,7 @@ else:
         # Score 2
         st.markdown("""
         <div class="scale-container">
-            <div class="score-number" style="background:#FF9800;">2</div>
+            <div class="score-number" style="background:#FFC107;">2</div>
             <div><strong>Significant Deviation</strong> - Changes or omits core meaning</div>
         </div>
         """, unsafe_allow_html=True)
@@ -389,7 +390,7 @@ else:
         # Score 1
         st.markdown("""
         <div class="scale-container">
-            <div class="score-number" style="background:#F44336;">1</div>
+            <div class="score-number" style="background:#FFA000;">1</div>
             <div><strong>Contradiction/Irrelevant</strong> - Opposite meaning or completely unrelated</div>
         </div>
         """, unsafe_allow_html=True)
