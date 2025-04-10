@@ -354,7 +354,7 @@ else:
         progress = st.progress((st.session_state.current_sample) / st.session_state.total_samples)
         st.caption(f"Sample {st.session_state.current_sample + 1} of {st.session_state.total_samples}")
         
-        st.markdown("Score meaning:")
+        st.markdown("#### Score descriptions:")
         # Score 5
         st.markdown("""
         <div class="scale-container">
