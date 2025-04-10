@@ -82,8 +82,8 @@ score_colors = {
 }
 
 score_descriptions = {
-    0: "Not rated", 1: "Contradiction", 2: "Deviation",
-    3: "Partial", 4: "Close", 5: "Perfect"
+    0: "Not Rated", 1: "Contradiction/Irrelevance", 2: "Significant Deviation",
+    3: "Partial Match", 4: "Close Match", 5: "Semantic Equivalence"
 }
 
 # Score display function
@@ -103,7 +103,7 @@ def show_score(current_score):
             <div class="score-bar" style="width:{current_score * 20}%; background:{"#f44336"};"></div>
         </div>
         <div class="score-indicator">
-            Selected: <span class="score-value" style="color:{score_colors[current_score]};">{current_score}</span> • {score_descriptions[current_score]} Match
+            Selected: <span class="score-value" style="color:{score_colors[current_score]};">{current_score}</span> • {score_descriptions[current_score]}
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -201,7 +201,7 @@ else:
             st.markdown("""
             <div class="scale-container">
                 <div class="score-number" style="background:#4CAF50;">5</div>
-                <div><strong>Perfect Alignment</strong> - Same meaning, may paraphrase but no contradictions or core omissions</div>
+                <div><strong>Semantic Equivalence</strong> - Same meaning, may paraphrase but no contradictions or core omissions</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -233,7 +233,7 @@ else:
             st.markdown("""
             <div class="scale-container">
                 <div class="score-number" style="background:#FFA000;">1</div>
-                <div><strong>Contradiction/Irrelevant</strong> - Opposite meaning or completely unrelated</div>
+                <div><strong>Contradiction/Irrelevance</strong> - Opposite meaning or completely unrelated</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -359,7 +359,7 @@ else:
         st.markdown("""
         <div class="scale-container">
             <div class="score-number" style="background:#4CAF50;">5</div>
-            <div><strong>Perfect Alignment</strong> - Same meaning, may paraphrase but no contradictions or core omissions</div>
+            <div><strong>Semantic Equivalence</strong> - Same meaning, may paraphrase but no contradictions or core omissions</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -391,7 +391,7 @@ else:
         st.markdown("""
         <div class="scale-container">
             <div class="score-number" style="background:#FFA000;">1</div>
-            <div><strong>Contradiction/Irrelevant</strong> - Opposite meaning or completely unrelated</div>
+            <div><strong>Contradiction/Irrelevance</strong> - Opposite meaning or completely unrelated</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -432,12 +432,12 @@ else:
             # Compact score guide in one row
             st.markdown(f"""
             <div class="score-labels">
-                <span style="color:{score_colors[0]};"></span>
+                <span style="color:{score_colors[0]};">0 Not Rated</span>
                 <span style="color:{score_colors[1]};"></span>
                 <span style="color:{score_colors[2]};"></span>
                 <span style="color:{score_colors[3]};"></span>
                 <span style="color:{score_colors[4]};"></span>
-                <span style="color:{score_colors[5]};"></span>
+                <span style="color:{score_colors[5]};">5 Equivalent</span>
             </div>
             """, unsafe_allow_html=True)
             
