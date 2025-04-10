@@ -217,7 +217,7 @@ else:
             st.markdown("""
             <div class="scale-container">
                 <div class="score-number" style="background:#FFD54F;">3</div>
-                <div><strong>Partial Match</strong> - Some alignment but unclear <strong>(Please click this only if you really couldn’t decide)</strong></div>
+                <div><strong>Partial Match</strong> - <strong>(Please click this only if you really couldn’t decide)</strong></div>
             </div>
             """, unsafe_allow_html=True)
             
