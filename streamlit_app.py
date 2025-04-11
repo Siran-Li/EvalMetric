@@ -252,16 +252,16 @@ else:
         # st.markdown("Here's how the evaluation will look:")
         
         # Example data - static values
-        example1 = {
-            'reference': "The watermelon seeds pass through your digestive system.",
-            'sentence': "You grow watermelons in your stomach.",
-            "score": 1
-        }
 
-        example2 = {
+        example1 = {
             'reference': "The watermelon seeds pass through your digestive system.",
             'sentence': "The watermelon seeds will be excreted.",
             "score": 5
+        }
+        example2 = {
+            'reference': "The watermelon seeds pass through your digestive system.",
+            'sentence': "You grow watermelons in your stomach.",
+            "score": 1
         }
         
         st.markdown("##### Example 1:")
@@ -291,7 +291,7 @@ else:
 
             # Score display - replace 'current_score' with your variable
             show_score(example1["score"])
-            st.markdown("**Explanation**: The sentences share similar elements (watermelon seeds and stomach) but convey different meanings, leading to a score of 1 (Contradiction/Irrelevance).")
+            st.markdown("**Explanation**: The sentences use different phrasing but preserve identical core meaning about seeds passing through the body, earning a score of 5 (Semantic Equivalence).")
         
         st.markdown("##### Example 2:")
         with st.container(border=True):
@@ -319,8 +319,9 @@ else:
 
             # Score display - replace 'current_score' with your variable
             show_score(example2["score"])
-            st.markdown("**Explanation**: The sentences use different phrasing but preserve identical core meaning about seeds passing through the body, earning a score of 5 (Semantic Equivalence).")
-        
+            st.markdown("**Explanation**: The sentences share similar elements (watermelon seeds and stomach) but convey different meanings, leading to a score of 1 (Contradiction/Irrelevance).")
+            
+
         st.markdown("---")  # Separator before the actual form
         
         # Original data loading form
