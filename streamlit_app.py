@@ -201,7 +201,7 @@ else:
             st.markdown("""
             <div class="scale-container">
                 <div class="score-number" style="background:#4CAF50;">5</div>
-                <div><strong>Semantic Equivalence</strong> - Same meaning, may paraphrase but no contradictions or core omissions</div>
+                <div><strong>Semantic Equivalence</strong>: Same meaning, may paraphrase but no contradictions or core omissions </div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -209,7 +209,7 @@ else:
             st.markdown("""
             <div class="scale-container">
                 <div class="score-number" style="background:#8BC34A;">4</div>
-                <div><strong>Close Match</strong> - Minor differences in non-essential details</div>
+                <div><strong>Close Match</strong>: Minor differences or omissions of non-essential details (adjectives, secondary clauses)</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -217,7 +217,7 @@ else:
             st.markdown("""
             <div class="scale-container">
                 <div class="score-number" style="background:#FFD54F;">3</div>
-                <div><strong>Partial Match</strong> - <strong>(Please click this only if you really couldn’t decide)</strong></div>
+                <div><strong>Partial Match</strong>: <strong>(Please click this only if you really couldn’t decide)</strong></div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -225,7 +225,7 @@ else:
             st.markdown("""
             <div class="scale-container">
                 <div class="score-number" style="background:#FFC107;">2</div>
-                <div><strong>Significant Deviation</strong> - Changes or omits core meaning</div>
+                <div><strong>Significant Deviation</strong>:  Changes or omits core meaning</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -233,7 +233,7 @@ else:
             st.markdown("""
             <div class="scale-container">
                 <div class="score-number" style="background:#FFA000;">1</div>
-                <div><strong>Contradiction/Irrelevance</strong> - Opposite meaning or completely unrelated</div>
+                <div><strong>Contradiction/Irrelevance</strong>: Opposite meaning or completely unrelated</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -360,7 +360,7 @@ else:
         st.markdown("""
         <div class="scale-container">
             <div class="score-number" style="background:#4CAF50;">5</div>
-            <div><strong>Semantic Equivalence</strong> - Same meaning, may paraphrase but no contradictions or core omissions</div>
+            <div><strong>Semantic Equivalence</strong>: Same meaning, may paraphrase but no contradictions or core omissions</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -368,7 +368,7 @@ else:
         st.markdown("""
         <div class="scale-container">
             <div class="score-number" style="background:#8BC34A;">4</div>
-            <div><strong>Close Match</strong> - Minor differences in non-essential details</div>
+            <div><strong>Close Match</strong>: Minor differences or omissions of non-essential details (adjectives, secondary clauses)</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -376,7 +376,7 @@ else:
         st.markdown("""
         <div class="scale-container">
             <div class="score-number" style="background:#FFD54F;">3</div>
-            <div><strong>Partial Match</strong> - Some alignment but unclear <strong>(Please click this only if you really couldn’t decide)</strong></div>
+            <div><strong>Partial Match</strong>: Some alignment but unclear <strong>(Please click this only if you really couldn’t decide)</strong></div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -384,7 +384,7 @@ else:
         st.markdown("""
         <div class="scale-container">
             <div class="score-number" style="background:#FFC107;">2</div>
-            <div><strong>Significant Deviation</strong> - Changes or omits core meaning</div>
+            <div><strong>Significant Deviation</strong>: Changes or omits core meaning</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -392,7 +392,7 @@ else:
         st.markdown("""
         <div class="scale-container">
             <div class="score-number" style="background:#FFA000;">1</div>
-            <div><strong>Contradiction/Irrelevance</strong> - Opposite meaning or completely unrelated</div>
+            <div><strong>Contradiction/Irrelevance</strong>: Opposite meaning or completely unrelated</div>
         </div>
         """, unsafe_allow_html=True)
         
